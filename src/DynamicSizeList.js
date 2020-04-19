@@ -343,7 +343,6 @@ export default class DynamicSizeList extends PureComponent {
   }
 
   componentWillUnmount() {
-    this._unmountHook();
     if (this._scrollByCorrection) {
       window.cancelAnimationFrame(this._scrollByCorrection);
     }
