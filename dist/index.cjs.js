@@ -17,9 +17,7 @@ function isBrowserSafari() {
   return userAgent.indexOf('Safari') !== -1 && userAgent.indexOf('Chrome') === -1;
 }
 
-var isSafari =
-/*#__PURE__*/
-isBrowserSafari();
+var isSafari = /*#__PURE__*/isBrowserSafari();
 var scrollBarWidth = 8;
 var scrollableContainerStyles = {
   display: 'inline',
@@ -77,9 +75,7 @@ var shrinkScrollDelta = 2 * scrollBarWidth + 1; // 17 = 2* scrollbar width(8px) 
 
 var expandScrollDelta = shrinkScrollDelta + 10;
 
-var ItemMeasurer =
-/*#__PURE__*/
-function (_Component) {
+var ItemMeasurer = /*#__PURE__*/function (_Component) {
   _inheritsLoose(ItemMeasurer, _Component);
 
   function ItemMeasurer() {
@@ -135,24 +131,24 @@ function (_Component) {
         height: _this.props.size + expandScrollDelta + "px",
         width: '100%'
       };
-      var renderItem = React__default.createElement("div", null, item, React__default.createElement("div", {
+      var renderItem = /*#__PURE__*/React__default.createElement("div", null, item, /*#__PURE__*/React__default.createElement("div", {
         style: scrollableContainerStyles
-      }, React__default.createElement("div", {
+      }, /*#__PURE__*/React__default.createElement("div", {
         dir: "ltr",
         style: scrollableWrapperStyle
-      }, React__default.createElement("div", {
+      }, /*#__PURE__*/React__default.createElement("div", {
         style: expandShrinkContainerStyles
-      }, React__default.createElement("div", {
+      }, /*#__PURE__*/React__default.createElement("div", {
         style: expandShrinkStyles,
         ref: _this._resizeSensorExpand,
         onScroll: _this.scrollingDiv
-      }, React__default.createElement("div", {
+      }, /*#__PURE__*/React__default.createElement("div", {
         style: expandChildStyle
-      })), React__default.createElement("div", {
+      })), /*#__PURE__*/React__default.createElement("div", {
         style: expandShrinkStyles,
         ref: _this._resizeSensorShrink,
         onScroll: _this.scrollingDiv
-      }, React__default.createElement("div", {
+      }, /*#__PURE__*/React__default.createElement("div", {
         style: shrinkChildStyle
       }))))));
       return renderItem;
@@ -351,9 +347,7 @@ var getItemSize = function getItemSize(props, index, instanceProps) {
   return getItemMetadata(props, index, instanceProps).size;
 };
 
-var DynamicSizeList =
-/*#__PURE__*/
-function (_PureComponent) {
+var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
   _inheritsLoose(DynamicSizeList, _PureComponent);
 
   // Always use explicit constructor for React components.
@@ -589,7 +583,7 @@ function (_PureComponent) {
     };
 
     _this._onItemRowUnmount = function (itemId, index) {
-      var _assertThisInitialize = _assertThisInitialized(_assertThisInitialized(_this)),
+      var _assertThisInitialize = _assertThisInitialized(_this),
           props = _assertThisInitialize.props;
 
       if (props.itemData[index] === itemId) {
@@ -881,8 +875,6 @@ function (_PureComponent) {
   };
 
   _proto.componentWillUnmount = function componentWillUnmount() {
-    this._unmountHook();
-
     if (this._scrollByCorrection) {
       window.cancelAnimationFrame(this._scrollByCorrection);
     }
@@ -959,9 +951,9 @@ function (_PureComponent) {
     if (typeof this.props.onScroll === 'function') {
       this._callOnScroll(scrollDirection, scrollOffset, scrollUpdateWasRequested, scrollHeight, height);
     }
-  }; // This method is called after mount and update.
+  } // This method is called after mount and update.
   // List implementations can override this method to be notified.
-
+  ;
 
   _proto._getRangeToRender = function _getRangeToRender(scrollTop, scrollHeight) {
     var _this$props5 = this.props,
@@ -995,10 +987,10 @@ function (_PureComponent) {
     }
 
     return [minValue, maxValue, startIndex, stopIndex];
-  }; // // Intentionally placed after all other instance properties have been initialized,
+  } // // Intentionally placed after all other instance properties have been initialized,
   // // So that DynamicSizeList can override the render behavior.
   // _instanceProps: any = initInstanceProps(this.props, this);
-
+  ;
 
   return DynamicSizeList;
 }(React.PureComponent); // NOTE: I considered further wrapping individual items with a pure ListItem component.
