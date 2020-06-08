@@ -4,10 +4,6 @@ import memoizeOne from 'memoize-one';
 import { createElement, PureComponent } from 'react';
 import ItemMeasurer from './ItemMeasurer';
 
-export const defaultItemKey = (index, data) => {
-  return index;
-};
-
 const getItemMetadata = (props, index, instanceProps) => {
   const { itemOffsetMap, itemSizeMap } = instanceProps;
   const { itemData } = props;
@@ -82,12 +78,12 @@ const findNearestItem = (props, instanceProps, high, low, scrollOffset) => {
 
 const getStartIndexForOffset = (props, offset, instanceProps) => {
   const { totalMeasuredSize } = instanceProps;
-  const { itemCount } = props;
+  const { itemData } = props;
 
   // If we've already positioned and measured past this point,
   // Use a binary search to find the closets cell.
   if (offset <= totalMeasuredSize) {
-    return findNearestItem(props, instanceProps, itemCount, 0, offset);
+    return findNearestItem(props, instanceProps, itemData.length, 0, offset);
   }
 
   // Otherwise render a new batch of items starting from where 0.
@@ -100,7 +96,7 @@ const getStopIndexForStartIndex = (
   scrollOffset,
   instanceProps
 ) => {
-  const { itemCount } = props;
+  const { itemData } = props;
 
   let stopIndex = startIndex;
   const maxOffset = scrollOffset + props.height;
@@ -113,7 +109,7 @@ const getStopIndexForStartIndex = (
     stopIndex--;
   }
 
-  if (stopIndex >= itemCount) {
+  if (stopIndex >= itemData.length) {
     return closestOffsetIndex;
   }
 
@@ -429,13 +425,14 @@ export default class DynamicSizeList extends PureComponent {
   );
 
   _callPropsCallbacks() {
-    const { itemCount, height } = this.props;
+    const { itemData, height } = this.props;
     const {
       scrollDirection,
       scrollOffset,
       scrollUpdateWasRequested,
       scrollHeight,
     } = this.state;
+    const itemCount = itemData.length;
 
     if (typeof this.props.onItemsRendered === 'function') {
       if (itemCount > 0) {
@@ -556,11 +553,12 @@ export default class DynamicSizeList extends PureComponent {
 
   _getRangeToRender(scrollTop, scrollHeight) {
     const {
-      itemCount,
+      itemData,
       overscanCountForward,
       overscanCountBackward,
     } = this.props;
     const { scrollDirection, scrollOffset } = this.state;
+    const itemCount = itemData.length;
 
     if (itemCount === 0) {
       return [0, 0, 0, 0];
@@ -627,10 +625,10 @@ export default class DynamicSizeList extends PureComponent {
 
   _generateOffsetMeasurements = () => {
     const { itemOffsetMap, itemSizeMap } = this._instanceProps;
-    const { itemData, itemCount } = this.props;
+    const { itemData } = this.props;
     this._instanceProps.totalMeasuredSize = 0;
 
-    for (let i = itemCount - 1; i >= 0; i--) {
+    for (let i = itemData.length - 1; i >= 0; i--) {
       const prevOffset = itemOffsetMap[itemData[i + 1]] || 0;
 
       // In some browsers (e.g. Firefox) fast scrolling may skip rows.
@@ -745,18 +743,10 @@ export default class DynamicSizeList extends PureComponent {
   };
 
   _renderItems = () => {
-    const {
-      children,
-      direction,
-      itemCount,
-      itemData,
-      itemKey = defaultItemKey,
-      skipResizeClass,
-      loaderId,
-    } = this.props;
+    const { children, direction, itemData, loaderId } = this.props;
     const width = this.innerRefWidth;
     let [startIndex, stopIndex] = this._getRangeToRender();
-
+    const itemCount = itemData.length;
     const items = [];
     if (itemCount > 0) {
       for (let index = itemCount - 1; index >= 0; index--) {
@@ -777,6 +767,7 @@ export default class DynamicSizeList extends PureComponent {
           localOlderPostsToRenderStartIndex === stopIndex + 1;
 
         const isLoader = itemData[index] === loaderId;
+        const itemId = itemData[index];
 
         // It's important to read style after fetching item metadata.
         // getItemMetadata() will clear stale styles.
@@ -788,7 +779,7 @@ export default class DynamicSizeList extends PureComponent {
         ) {
           const item = createElement(children, {
             data: itemData,
-            itemId: itemData[index],
+            itemId,
           });
 
           // Always wrap children in a ItemMeasurer to detect changes in size.
@@ -798,11 +789,10 @@ export default class DynamicSizeList extends PureComponent {
               handleNewMeasurements: this._handleNewMeasurements,
               index,
               item,
-              key: itemKey(index),
+              key: itemId,
               size,
-              itemId: itemKey(index),
+              itemId,
               width,
-              skipResizeClass,
               onUnmount: this._onItemRowUnmount,
               itemCount,
             })
@@ -810,7 +800,7 @@ export default class DynamicSizeList extends PureComponent {
         } else {
           items.push(
             createElement('div', {
-              key: itemKey(index),
+              key: itemId,
               style,
             })
           );

@@ -616,7 +616,6 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
           itemData = _this$props2.itemData,
           _this$props2$itemKey = _this$props2.itemKey,
           itemKey = _this$props2$itemKey === void 0 ? defaultItemKey : _this$props2$itemKey,
-          skipResizeClass = _this$props2.skipResizeClass,
           loaderId = _this$props2.loaderId;
       var width = _this.innerRefWidth;
 
@@ -655,7 +654,6 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
               size: size,
               itemId: itemKey(index),
               width: width,
-              skipResizeClass: skipResizeClass,
               onUnmount: _this._onItemRowUnmount,
               itemCount: itemCount
             }));
