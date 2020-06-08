@@ -221,10 +221,6 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
   return ItemMeasurer;
 }(Component);
 
-var defaultItemKey = function defaultItemKey(index, data) {
-  return index;
-};
-
 var getItemMetadata = function getItemMetadata(props, index, instanceProps) {
   var itemOffsetMap = instanceProps.itemOffsetMap,
       itemSizeMap = instanceProps.itemSizeMap;
@@ -300,11 +296,11 @@ var findNearestItem = function findNearestItem(props, instanceProps, high, low, 
 
 var getStartIndexForOffset = function getStartIndexForOffset(props, offset, instanceProps) {
   var totalMeasuredSize = instanceProps.totalMeasuredSize;
-  var itemCount = props.itemCount; // If we've already positioned and measured past this point,
+  var itemData = props.itemData; // If we've already positioned and measured past this point,
   // Use a binary search to find the closets cell.
 
   if (offset <= totalMeasuredSize) {
-    return findNearestItem(props, instanceProps, itemCount, 0, offset);
+    return findNearestItem(props, instanceProps, itemData.length, 0, offset);
   } // Otherwise render a new batch of items starting from where 0.
 
 
@@ -312,7 +308,7 @@ var getStartIndexForOffset = function getStartIndexForOffset(props, offset, inst
 };
 
 var getStopIndexForStartIndex = function getStopIndexForStartIndex(props, startIndex, scrollOffset, instanceProps) {
-  var itemCount = props.itemCount;
+  var itemData = props.itemData;
   var stopIndex = startIndex;
   var maxOffset = scrollOffset + props.height;
   var itemMetadata = getItemMetadata(props, stopIndex, instanceProps);
@@ -326,7 +322,7 @@ var getStopIndexForStartIndex = function getStopIndexForStartIndex(props, startI
     stopIndex--;
   }
 
-  if (stopIndex >= itemCount) {
+  if (stopIndex >= itemData.length) {
     return closestOffsetIndex;
   }
 
@@ -475,12 +471,10 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       var _this$_instanceProps = _this._instanceProps,
           itemOffsetMap = _this$_instanceProps.itemOffsetMap,
           itemSizeMap = _this$_instanceProps.itemSizeMap;
-      var _this$props = _this.props,
-          itemData = _this$props.itemData,
-          itemCount = _this$props.itemCount;
+      var itemData = _this.props.itemData;
       _this._instanceProps.totalMeasuredSize = 0;
 
-      for (var i = itemCount - 1; i >= 0; i--) {
+      for (var i = itemData.length - 1; i >= 0; i--) {
         var prevOffset = itemOffsetMap[itemData[i + 1]] || 0; // In some browsers (e.g. Firefox) fast scrolling may skip rows.
         // In this case, our assumptions about last measured indices may be incorrect.
         // Handle this edge case to prevent NaN values from breaking styles.
@@ -602,20 +596,18 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     };
 
     _this._renderItems = function () {
-      var _this$props2 = _this.props,
-          children = _this$props2.children,
-          direction = _this$props2.direction,
-          itemCount = _this$props2.itemCount,
-          itemData = _this$props2.itemData,
-          _this$props2$itemKey = _this$props2.itemKey,
-          itemKey = _this$props2$itemKey === void 0 ? defaultItemKey : _this$props2$itemKey,
-          loaderId = _this$props2.loaderId;
+      var _this$props = _this.props,
+          children = _this$props.children,
+          direction = _this$props.direction,
+          itemData = _this$props.itemData,
+          loaderId = _this$props.loaderId;
       var width = _this.innerRefWidth;
 
       var _this$_getRangeToRend2 = _this._getRangeToRender(),
           startIndex = _this$_getRangeToRend2[0],
           stopIndex = _this$_getRangeToRend2[1];
 
+      var itemCount = itemData.length;
       var items = [];
 
       if (itemCount > 0) {
@@ -627,7 +619,8 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
               localOlderPostsToRenderStartIndex = _this$state$localOlde[0],
               localOlderPostsToRenderStopIndex = _this$state$localOlde[1];
           var isItemInLocalPosts = index >= localOlderPostsToRenderStartIndex && index < localOlderPostsToRenderStopIndex + 1 && localOlderPostsToRenderStartIndex === stopIndex + 1;
-          var isLoader = itemData[index] === loaderId; // It's important to read style after fetching item metadata.
+          var isLoader = itemData[index] === loaderId;
+          var itemId = itemData[index]; // It's important to read style after fetching item metadata.
           // getItemMetadata() will clear stale styles.
 
           var style = _this._getItemStyle(index);
@@ -635,7 +628,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
           if (index >= startIndex && index < stopIndex + 1 || isItemInLocalPosts || isLoader) {
             var item = createElement(children, {
               data: itemData,
-              itemId: itemData[index]
+              itemId: itemId
             }); // Always wrap children in a ItemMeasurer to detect changes in size.
 
             items.push(createElement(ItemMeasurer, {
@@ -643,16 +636,16 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
               handleNewMeasurements: _this._handleNewMeasurements,
               index: index,
               item: item,
-              key: itemKey(index),
+              key: itemId,
               size: size,
-              itemId: itemKey(index),
+              itemId: itemId,
               width: width,
               onUnmount: _this._onItemRowUnmount,
               itemCount: itemCount
             }));
           } else {
             items.push(createElement('div', {
-              key: itemKey(index),
+              key: itemId,
               style: style
             }));
           }
@@ -872,13 +865,13 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
   };
 
   _proto.render = function render() {
-    var _this$props3 = this.props,
-        className = _this$props3.className,
-        innerRef = _this$props3.innerRef,
-        innerTagName = _this$props3.innerTagName,
-        outerTagName = _this$props3.outerTagName,
-        style = _this$props3.style,
-        innerListStyle = _this$props3.innerListStyle;
+    var _this$props2 = this.props,
+        className = _this$props2.className,
+        innerRef = _this$props2.innerRef,
+        innerTagName = _this$props2.innerTagName,
+        outerTagName = _this$props2.outerTagName,
+        style = _this$props2.style,
+        innerListStyle = _this$props2.innerListStyle;
     var onScroll = this._onScrollVertical;
 
     var items = this._renderItems();
@@ -902,14 +895,15 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
   };
 
   _proto._callPropsCallbacks = function _callPropsCallbacks() {
-    var _this$props4 = this.props,
-        itemCount = _this$props4.itemCount,
-        height = _this$props4.height;
+    var _this$props3 = this.props,
+        itemData = _this$props3.itemData,
+        height = _this$props3.height;
     var _this$state2 = this.state,
         scrollDirection = _this$state2.scrollDirection,
         scrollOffset = _this$state2.scrollOffset,
         scrollUpdateWasRequested = _this$state2.scrollUpdateWasRequested,
         scrollHeight = _this$state2.scrollHeight;
+    var itemCount = itemData.length;
 
     if (typeof this.props.onItemsRendered === 'function') {
       if (itemCount > 0) {
@@ -947,13 +941,14 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
   ;
 
   _proto._getRangeToRender = function _getRangeToRender(scrollTop, scrollHeight) {
-    var _this$props5 = this.props,
-        itemCount = _this$props5.itemCount,
-        overscanCountForward = _this$props5.overscanCountForward,
-        overscanCountBackward = _this$props5.overscanCountBackward;
+    var _this$props4 = this.props,
+        itemData = _this$props4.itemData,
+        overscanCountForward = _this$props4.overscanCountForward,
+        overscanCountBackward = _this$props4.overscanCountBackward;
     var _this$state3 = this.state,
         scrollDirection = _this$state3.scrollDirection,
         scrollOffset = _this$state3.scrollOffset;
+    var itemCount = itemData.length;
 
     if (itemCount === 0) {
       return [0, 0, 0, 0];
