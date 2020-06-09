@@ -228,9 +228,9 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
   return ItemMeasurer;
 }(React.Component);
 
-var getItemMetadata = function getItemMetadata(props, index, instanceProps) {
-  var itemOffsetMap = instanceProps.itemOffsetMap,
-      itemSizeMap = instanceProps.itemSizeMap;
+var getItemMetadata = function getItemMetadata(props, index, listMetaData) {
+  var itemOffsetMap = listMetaData.itemOffsetMap,
+      itemSizeMap = listMetaData.itemSizeMap;
   var itemData = props.itemData; // If the specified item has not yet been measured,
   // Just return an estimated size for now.
 
@@ -249,16 +249,16 @@ var getItemMetadata = function getItemMetadata(props, index, instanceProps) {
   };
 };
 
-var getItemOffset = function getItemOffset(props, index, instanceProps) {
-  return getItemMetadata(props, index, instanceProps).offset;
+var getItemOffset = function getItemOffset(props, index, listMetaData) {
+  return getItemMetadata(props, index, listMetaData).offset;
 };
 
-var getOffsetForIndexAndAlignment = function getOffsetForIndexAndAlignment(props, index, align, scrollOffset, instanceProps) {
+var getOffsetForIndexAndAlignment = function getOffsetForIndexAndAlignment(props, index, align, scrollOffset, listMetaData) {
   var height = props.height;
-  var itemMetadata = getItemMetadata(props, index, instanceProps); // Get estimated total size after ItemMetadata is computed,
+  var itemMetadata = getItemMetadata(props, index, listMetaData); // Get estimated total size after ItemMetadata is computed,
   // To ensure it reflects actual measurements instead of just estimates.
 
-  var estimatedTotalSize = instanceProps.totalMeasuredSize;
+  var estimatedTotalSize = listMetaData.totalMeasuredSize;
   var maxOffset = Math.max(0, itemMetadata.offset + itemMetadata.size - height);
   var minOffset = Math.max(0, itemMetadata.offset);
 
@@ -285,11 +285,11 @@ var getOffsetForIndexAndAlignment = function getOffsetForIndexAndAlignment(props
   }
 };
 
-var findNearestItem = function findNearestItem(props, instanceProps, high, low, scrollOffset) {
+var findNearestItem = function findNearestItem(props, listMetaData, high, low, scrollOffset) {
   var index = low;
 
   while (low <= high) {
-    var currentOffset = getItemMetadata(props, low, instanceProps).offset;
+    var currentOffset = getItemMetadata(props, low, listMetaData).offset;
 
     if (scrollOffset - currentOffset <= 0) {
       index = low;
@@ -301,29 +301,29 @@ var findNearestItem = function findNearestItem(props, instanceProps, high, low, 
   return index;
 };
 
-var getStartIndexForOffset = function getStartIndexForOffset(props, offset, instanceProps) {
-  var totalMeasuredSize = instanceProps.totalMeasuredSize;
+var getStartIndexForOffset = function getStartIndexForOffset(props, offset, listMetaData) {
+  var totalMeasuredSize = listMetaData.totalMeasuredSize;
   var itemData = props.itemData; // If we've already positioned and measured past this point,
   // Use a binary search to find the closets cell.
 
   if (offset <= totalMeasuredSize) {
-    return findNearestItem(props, instanceProps, itemData.length, 0, offset);
+    return findNearestItem(props, listMetaData, itemData.length, 0, offset);
   } // Otherwise render a new batch of items starting from where 0.
 
 
   return 0;
 };
 
-var getStopIndexForStartIndex = function getStopIndexForStartIndex(props, startIndex, scrollOffset, instanceProps) {
+var getStopIndexForStartIndex = function getStopIndexForStartIndex(props, startIndex, scrollOffset, listMetaData) {
   var itemData = props.itemData;
   var stopIndex = startIndex;
   var maxOffset = scrollOffset + props.height;
-  var itemMetadata = getItemMetadata(props, stopIndex, instanceProps);
+  var itemMetadata = getItemMetadata(props, stopIndex, listMetaData);
   var offset = itemMetadata.offset + (itemMetadata.size || 0);
   var closestOffsetIndex = 0;
 
   while (stopIndex > 0 && offset <= maxOffset) {
-    var _itemMetadata = getItemMetadata(props, stopIndex, instanceProps);
+    var _itemMetadata = getItemMetadata(props, stopIndex, listMetaData);
 
     offset = _itemMetadata.offset + _itemMetadata.size;
     stopIndex--;
@@ -336,11 +336,11 @@ var getStopIndexForStartIndex = function getStopIndexForStartIndex(props, startI
   return stopIndex;
 };
 
-var getItemSize = function getItemSize(props, index, instanceProps) {
+var getItemSize = function getItemSize(props, index, listMetaData) {
   // Do not hard-code item dimensions.
   // We don't know them initially.
   // Even once we do, changes in item content or list size should reflow.
-  return getItemMetadata(props, index, instanceProps).size;
+  return getItemMetadata(props, index, listMetaData).size;
 };
 
 var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
@@ -353,7 +353,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     var _this;
 
     _this = _PureComponent.call(this, _props) || this;
-    _this._instanceProps = {
+    _this._listMetaData = {
       itemOffsetMap: {},
       itemSizeMap: {},
       totalMeasuredSize: 0,
@@ -409,7 +409,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     });
 
     _this._commitHook = function () {
-      if (!_this.state.scrolledToInitIndex && Object.keys(_this._instanceProps.itemOffsetMap).length) {
+      if (!_this.state.scrolledToInitIndex && Object.keys(_this._listMetaData.itemOffsetMap).length) {
         var _this$props$initScrol = _this.props.initScrollToIndex(),
             index = _this$props$initScrol.index,
             position = _this$props$initScrol.position,
@@ -430,13 +430,21 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     };
 
     _this._dataChange = function () {
-      if (_this._instanceProps.totalMeasuredSize < _this.props.height) {
+      if (_this._listMetaData.totalMeasuredSize < _this.props.height) {
         _this.props.canLoadMorePosts();
       }
     };
 
+    _this._heightChange = function (prevHeight, prevOffset) {
+      if (prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - 10) {
+        _this.scrollToItem(0, 'end');
+
+        return;
+      }
+    };
+
     _this._widthChange = function (prevHeight, prevOffset) {
-      if (prevOffset + prevHeight >= _this._instanceProps.totalMeasuredSize - 10) {
+      if (prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - 10) {
         _this.scrollToItem(0, 'end');
 
         return;
@@ -453,8 +461,8 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       } else {
         itemStyleCache[itemData[index]] = style = {
           left: 0,
-          top: getItemOffset(_this.props, index, _this._instanceProps),
-          height: getItemSize(_this.props, index, _this._instanceProps),
+          top: getItemOffset(_this.props, index, _this._listMetaData),
+          height: getItemSize(_this.props, index, _this._listMetaData),
           width: '100%'
         };
       }
@@ -475,11 +483,11 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     };
 
     _this._generateOffsetMeasurements = function () {
-      var _this$_instanceProps = _this._instanceProps,
-          itemOffsetMap = _this$_instanceProps.itemOffsetMap,
-          itemSizeMap = _this$_instanceProps.itemSizeMap;
+      var _this$_listMetaData = _this._listMetaData,
+          itemOffsetMap = _this$_listMetaData.itemOffsetMap,
+          itemSizeMap = _this$_listMetaData.itemSizeMap;
       var itemData = _this.props.itemData;
-      _this._instanceProps.totalMeasuredSize = 0;
+      _this._listMetaData.totalMeasuredSize = 0;
 
       for (var i = itemData.length - 1; i >= 0; i--) {
         var prevOffset = itemOffsetMap[itemData[i + 1]] || 0; // In some browsers (e.g. Firefox) fast scrolling may skip rows.
@@ -489,14 +497,14 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
 
         var prevSize = itemSizeMap[itemData[i + 1]] || 0;
         itemOffsetMap[itemData[i]] = prevOffset + prevSize;
-        _this._instanceProps.totalMeasuredSize += itemSizeMap[itemData[i]] || 0; // Reset cached style to clear stale position.
+        _this._listMetaData.totalMeasuredSize += itemSizeMap[itemData[i]] || 0; // Reset cached style to clear stale position.
 
         delete _this._itemStyleCache[itemData[i]];
       }
     };
 
     _this._handleNewMeasurements = function (key, newSize, forceScrollCorrection) {
-      var itemSizeMap = _this._instanceProps.itemSizeMap;
+      var itemSizeMap = _this._listMetaData.itemSizeMap;
       var itemData = _this.props.itemData;
       var index = itemData.findIndex(function (item) {
         return item === key;
@@ -520,7 +528,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       }
 
       var element = _this._outerRef;
-      var wasAtBottom = _this.props.height + element.scrollTop >= _this._instanceProps.totalMeasuredSize - 10;
+      var wasAtBottom = _this.props.height + element.scrollTop >= _this._listMetaData.totalMeasuredSize - 10;
 
       if ((wasAtBottom || _this._keepScrollToBottom) && _this.props.correctScrollToBottom) {
         _this._generateOffsetMeasurements();
@@ -587,10 +595,10 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       var doesItemExist = props.itemData.includes(itemId);
 
       if (!doesItemExist) {
-        delete _this._instanceProps.itemSizeMap[itemId];
-        delete _this._instanceProps.itemOffsetMap[itemId];
+        delete _this._listMetaData.itemSizeMap[itemId];
+        delete _this._listMetaData.itemOffsetMap[itemId];
         var element = _this._outerRef;
-        var atBottom = element.offsetHeight + element.scrollTop >= _this._instanceProps.totalMeasuredSize - 10;
+        var atBottom = element.offsetHeight + element.scrollTop >= _this._listMetaData.totalMeasuredSize - 10;
 
         _this._generateOffsetMeasurements();
 
@@ -619,7 +627,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
 
       if (itemCount > 0) {
         for (var index = itemCount - 1; index >= 0; index--) {
-          var _getItemMetadata = getItemMetadata(_this.props, index, _this._instanceProps),
+          var _getItemMetadata = getItemMetadata(_this.props, index, _this._listMetaData),
               size = _getItemMetadata.size;
 
           var _this$state$localOlde = _this.state.localOlderPostsToRender,
@@ -773,10 +781,10 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       return;
     }
 
-    var offsetOfItem = getOffsetForIndexAndAlignment(this.props, index, align, scrollOffset, this._instanceProps);
+    var offsetOfItem = getOffsetForIndexAndAlignment(this.props, index, align, scrollOffset, this._listMetaData);
 
     if (!offsetOfItem) {
-      var itemSize = getItemSize(this.props, index, this._instanceProps);
+      var itemSize = getItemSize(this.props, index, this._listMetaData);
 
       if (!itemSize && this.props.scrollToFailed) {
         if (this.state.scrolledToInitIndex) {
@@ -923,7 +931,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
         this._callOnItemsRendered(_overscanStartIndex, _overscanStopIndex, _visibleStartIndex2, _visibleStopIndex);
 
         if (scrollDirection === 'backward' && scrollOffset < 1000 && _overscanStopIndex !== itemCount - 1) {
-          var sizeOfNextElement = getItemSize(this.props, _overscanStopIndex + 1, this._instanceProps).size;
+          var sizeOfNextElement = getItemSize(this.props, _overscanStopIndex + 1, this._listMetaData).size;
 
           if (!sizeOfNextElement && this.state.scrolledToInitIndex) {
             this.setState(function (prevState) {
@@ -962,8 +970,8 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     }
 
     var scrollOffsetValue = scrollTop >= 0 ? scrollTop : scrollOffset;
-    var startIndex = getStartIndexForOffset(this.props, scrollOffsetValue, this._instanceProps);
-    var stopIndex = getStopIndexForStartIndex(this.props, startIndex, scrollOffsetValue, this._instanceProps); // Overscan by one item in each direction so that tab/focus works.
+    var startIndex = getStartIndexForOffset(this.props, scrollOffsetValue, this._listMetaData);
+    var stopIndex = getStopIndexForStartIndex(this.props, startIndex, scrollOffsetValue, this._listMetaData); // Overscan by one item in each direction so that tab/focus works.
     // If there isn't at least one extra item, tab loops back around.
 
     var overscanBackward = scrollDirection === 'backward' ? overscanCountBackward : Math.max(1, overscanCountForward);
@@ -971,7 +979,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     var minValue = Math.max(0, stopIndex - overscanBackward);
     var maxValue = Math.max(0, Math.min(itemCount - 1, startIndex + overscanForward));
 
-    while (!getItemSize(this.props, maxValue, this._instanceProps) && maxValue > 0 && this._instanceProps.totalMeasuredSize > this.props.height) {
+    while (!getItemSize(this.props, maxValue, this._listMetaData) && maxValue > 0 && this._listMetaData.totalMeasuredSize > this.props.height) {
       maxValue--;
     }
 
@@ -980,10 +988,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     }
 
     return [minValue, maxValue, startIndex, stopIndex];
-  } // // Intentionally placed after all other instance properties have been initialized,
-  // // So that DynamicSizeList can override the render behavior.
-  // _instanceProps: any = initInstanceProps(this.props, this);
-  ;
+  };
 
   return DynamicSizeList;
 }(React.PureComponent); // NOTE: I considered further wrapping individual items with a pure ListItem component.

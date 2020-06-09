@@ -4,8 +4,8 @@ import memoizeOne from 'memoize-one';
 import { createElement, PureComponent } from 'react';
 import ItemMeasurer from './ItemMeasurer';
 
-const getItemMetadata = (props, index, instanceProps) => {
-  const { itemOffsetMap, itemSizeMap } = instanceProps;
+const getItemMetadata = (props, index, listMetaData) => {
+  const { itemOffsetMap, itemSizeMap } = listMetaData;
   const { itemData } = props;
   // If the specified item has not yet been measured,
   // Just return an estimated size for now.
@@ -22,22 +22,22 @@ const getItemMetadata = (props, index, instanceProps) => {
   return { offset, size };
 };
 
-const getItemOffset = (props, index, instanceProps) =>
-  getItemMetadata(props, index, instanceProps).offset;
+const getItemOffset = (props, index, listMetaData) =>
+  getItemMetadata(props, index, listMetaData).offset;
 
 const getOffsetForIndexAndAlignment = (
   props,
   index,
   align,
   scrollOffset,
-  instanceProps
+  listMetaData
 ) => {
   const { height } = props;
-  const itemMetadata = getItemMetadata(props, index, instanceProps);
+  const itemMetadata = getItemMetadata(props, index, listMetaData);
 
   // Get estimated total size after ItemMetadata is computed,
   // To ensure it reflects actual measurements instead of just estimates.
-  const estimatedTotalSize = instanceProps.totalMeasuredSize;
+  const estimatedTotalSize = listMetaData.totalMeasuredSize;
 
   const maxOffset = Math.max(
     0,
@@ -64,10 +64,10 @@ const getOffsetForIndexAndAlignment = (
   }
 };
 
-const findNearestItem = (props, instanceProps, high, low, scrollOffset) => {
+const findNearestItem = (props, listMetaData, high, low, scrollOffset) => {
   let index = low;
   while (low <= high) {
-    var currentOffset = getItemMetadata(props, low, instanceProps).offset;
+    var currentOffset = getItemMetadata(props, low, listMetaData).offset;
     if (scrollOffset - currentOffset <= 0) {
       index = low;
     }
@@ -76,14 +76,14 @@ const findNearestItem = (props, instanceProps, high, low, scrollOffset) => {
   return index;
 };
 
-const getStartIndexForOffset = (props, offset, instanceProps) => {
-  const { totalMeasuredSize } = instanceProps;
+const getStartIndexForOffset = (props, offset, listMetaData) => {
+  const { totalMeasuredSize } = listMetaData;
   const { itemData } = props;
 
   // If we've already positioned and measured past this point,
   // Use a binary search to find the closets cell.
   if (offset <= totalMeasuredSize) {
-    return findNearestItem(props, instanceProps, itemData.length, 0, offset);
+    return findNearestItem(props, listMetaData, itemData.length, 0, offset);
   }
 
   // Otherwise render a new batch of items starting from where 0.
@@ -94,17 +94,17 @@ const getStopIndexForStartIndex = (
   props,
   startIndex,
   scrollOffset,
-  instanceProps
+  listMetaData
 ) => {
   const { itemData } = props;
 
   let stopIndex = startIndex;
   const maxOffset = scrollOffset + props.height;
-  const itemMetadata = getItemMetadata(props, stopIndex, instanceProps);
+  const itemMetadata = getItemMetadata(props, stopIndex, listMetaData);
   let offset = itemMetadata.offset + (itemMetadata.size || 0);
   let closestOffsetIndex = 0;
   while (stopIndex > 0 && offset <= maxOffset) {
-    const itemMetadata = getItemMetadata(props, stopIndex, instanceProps);
+    const itemMetadata = getItemMetadata(props, stopIndex, listMetaData);
     offset = itemMetadata.offset + itemMetadata.size;
     stopIndex--;
   }
@@ -116,15 +116,15 @@ const getStopIndexForStartIndex = (
   return stopIndex;
 };
 
-const getItemSize = (props, index, instanceProps) => {
+const getItemSize = (props, index, listMetaData) => {
   // Do not hard-code item dimensions.
   // We don't know them initially.
   // Even once we do, changes in item content or list size should reflow.
-  return getItemMetadata(props, index, instanceProps).size;
+  return getItemMetadata(props, index, listMetaData).size;
 };
 
 export default class DynamicSizeList extends PureComponent {
-  _instanceProps = {
+  _listMetaData = {
     itemOffsetMap: {},
     itemSizeMap: {},
     totalMeasuredSize: 0,
@@ -221,10 +221,10 @@ export default class DynamicSizeList extends PureComponent {
       index,
       align,
       scrollOffset,
-      this._instanceProps
+      this._listMetaData
     );
     if (!offsetOfItem) {
-      const itemSize = getItemSize(this.props, index, this._instanceProps);
+      const itemSize = getItemSize(this.props, index, this._listMetaData);
       if (!itemSize && this.props.scrollToFailed) {
         if (this.state.scrolledToInitIndex) {
           this.props.scrollToFailed(index);
@@ -458,7 +458,7 @@ export default class DynamicSizeList extends PureComponent {
           const sizeOfNextElement = getItemSize(
             this.props,
             overscanStopIndex + 1,
-            this._instanceProps
+            this._listMetaData
           ).size;
           if (!sizeOfNextElement && this.state.scrolledToInitIndex) {
             this.setState(prevState => {
@@ -496,7 +496,7 @@ export default class DynamicSizeList extends PureComponent {
   _commitHook = () => {
     if (
       !this.state.scrolledToInitIndex &&
-      Object.keys(this._instanceProps.itemOffsetMap).length
+      Object.keys(this._listMetaData.itemOffsetMap).length
     ) {
       const { index, position, offset } = this.props.initScrollToIndex();
       this.scrollToItem(index, position, offset);
@@ -515,13 +515,20 @@ export default class DynamicSizeList extends PureComponent {
   // This method is called when data changes
   // List implementations can override this method to be notified.
   _dataChange = () => {
-    if (this._instanceProps.totalMeasuredSize < this.props.height) {
+    if (this._listMetaData.totalMeasuredSize < this.props.height) {
       this.props.canLoadMorePosts();
     }
   };
 
+  _heightChange = (prevHeight, prevOffset) => {
+    if (prevOffset + prevHeight >= this._listMetaData.totalMeasuredSize - 10) {
+      this.scrollToItem(0, 'end');
+      return;
+    }
+  };
+
   _widthChange = (prevHeight, prevOffset) => {
-    if (prevOffset + prevHeight >= this._instanceProps.totalMeasuredSize - 10) {
+    if (prevOffset + prevHeight >= this._listMetaData.totalMeasuredSize - 10) {
       this.scrollToItem(0, 'end');
       return;
     }
@@ -542,8 +549,8 @@ export default class DynamicSizeList extends PureComponent {
     } else {
       itemStyleCache[itemData[index]] = style = {
         left: 0,
-        top: getItemOffset(this.props, index, this._instanceProps),
-        height: getItemSize(this.props, index, this._instanceProps),
+        top: getItemOffset(this.props, index, this._listMetaData),
+        height: getItemSize(this.props, index, this._listMetaData),
         width: '100%',
       };
     }
@@ -567,13 +574,13 @@ export default class DynamicSizeList extends PureComponent {
     const startIndex = getStartIndexForOffset(
       this.props,
       scrollOffsetValue,
-      this._instanceProps
+      this._listMetaData
     );
     const stopIndex = getStopIndexForStartIndex(
       this.props,
       startIndex,
       scrollOffsetValue,
-      this._instanceProps
+      this._listMetaData
     );
 
     // Overscan by one item in each direction so that tab/focus works.
@@ -595,9 +602,9 @@ export default class DynamicSizeList extends PureComponent {
     );
 
     while (
-      !getItemSize(this.props, maxValue, this._instanceProps) &&
+      !getItemSize(this.props, maxValue, this._listMetaData) &&
       maxValue > 0 &&
-      this._instanceProps.totalMeasuredSize > this.props.height
+      this._listMetaData.totalMeasuredSize > this.props.height
     ) {
       maxValue--;
     }
@@ -624,9 +631,9 @@ export default class DynamicSizeList extends PureComponent {
   };
 
   _generateOffsetMeasurements = () => {
-    const { itemOffsetMap, itemSizeMap } = this._instanceProps;
+    const { itemOffsetMap, itemSizeMap } = this._listMetaData;
     const { itemData } = this.props;
-    this._instanceProps.totalMeasuredSize = 0;
+    this._listMetaData.totalMeasuredSize = 0;
 
     for (let i = itemData.length - 1; i >= 0; i--) {
       const prevOffset = itemOffsetMap[itemData[i + 1]] || 0;
@@ -638,14 +645,14 @@ export default class DynamicSizeList extends PureComponent {
       const prevSize = itemSizeMap[itemData[i + 1]] || 0;
 
       itemOffsetMap[itemData[i]] = prevOffset + prevSize;
-      this._instanceProps.totalMeasuredSize += itemSizeMap[itemData[i]] || 0;
+      this._listMetaData.totalMeasuredSize += itemSizeMap[itemData[i]] || 0;
       // Reset cached style to clear stale position.
       delete this._itemStyleCache[itemData[i]];
     }
   };
 
   _handleNewMeasurements = (key, newSize, forceScrollCorrection) => {
-    const { itemSizeMap } = this._instanceProps;
+    const { itemSizeMap } = this._listMetaData;
     const { itemData } = this.props;
     const index = itemData.findIndex(item => item === key);
     // In some browsers (e.g. Firefox) fast scrolling may skip rows.
@@ -667,7 +674,7 @@ export default class DynamicSizeList extends PureComponent {
     const element = this._outerRef;
     const wasAtBottom =
       this.props.height + element.scrollTop >=
-      this._instanceProps.totalMeasuredSize - 10;
+      this._listMetaData.totalMeasuredSize - 10;
 
     if (
       (wasAtBottom || this._keepScrollToBottom) &&
@@ -727,13 +734,13 @@ export default class DynamicSizeList extends PureComponent {
     }
     const doesItemExist = props.itemData.includes(itemId);
     if (!doesItemExist) {
-      delete this._instanceProps.itemSizeMap[itemId];
-      delete this._instanceProps.itemOffsetMap[itemId];
+      delete this._listMetaData.itemSizeMap[itemId];
+      delete this._listMetaData.itemOffsetMap[itemId];
       const element = this._outerRef;
 
       var atBottom =
         element.offsetHeight + element.scrollTop >=
-        this._instanceProps.totalMeasuredSize - 10;
+        this._listMetaData.totalMeasuredSize - 10;
       this._generateOffsetMeasurements();
       if (atBottom) {
         this.scrollToItem(0, 'end');
@@ -753,7 +760,7 @@ export default class DynamicSizeList extends PureComponent {
         const { size } = getItemMetadata(
           this.props,
           index,
-          this._instanceProps
+          this._listMetaData
         );
 
         const [
@@ -864,10 +871,6 @@ export default class DynamicSizeList extends PureComponent {
       outerRef.current = ref;
     }
   };
-
-  // // Intentionally placed after all other instance properties have been initialized,
-  // // So that DynamicSizeList can override the render behavior.
-  // _instanceProps: any = initInstanceProps(this.props, this);
 }
 
 // NOTE: I considered further wrapping individual items with a pure ListItem component.
