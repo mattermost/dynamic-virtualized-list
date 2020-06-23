@@ -124,7 +124,11 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
         height: _this.props.size + expandScrollDelta + "px",
         width: '100%'
       };
-      var renderItem = /*#__PURE__*/React.createElement("div", null, item, /*#__PURE__*/React.createElement("div", {
+      var renderItem = /*#__PURE__*/React.createElement("div", {
+        style: {
+          position: 'relative'
+        }
+      }, item, /*#__PURE__*/React.createElement("div", {
         style: scrollableContainerStyles
       }, /*#__PURE__*/React.createElement("div", {
         dir: "ltr",
