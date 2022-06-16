@@ -4,6 +4,8 @@ import memoizeOne from 'memoize-one';
 import { createElement, PureComponent } from 'react';
 import ItemMeasurer from './ItemMeasurer';
 
+const atBottomMargin = 10;
+
 const getItemMetadata = (props, index, listMetaData) => {
   const { itemOffsetMap, itemSizeMap } = listMetaData;
   const { itemData } = props;
@@ -521,16 +523,62 @@ export default class DynamicSizeList extends PureComponent {
   };
 
   _heightChange = (prevHeight, prevOffset) => {
-    if (prevOffset + prevHeight >= this._listMetaData.totalMeasuredSize - 10) {
+    const wasAtBottom =
+      prevOffset + prevHeight >=
+      this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+    if (window.logDSLEvents) {
+      console.log(
+        'DynamicSizeList._heightChange',
+        'prevHeight=' + prevHeight,
+        'prevOffset=' + prevOffset,
+        'totalMeasuredSize=' + this._listMetaData.totalMeasuredSize,
+        'wasAtBottom=' + wasAtBottom
+      );
+    }
+
+    if (wasAtBottom) {
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._heightChange - keeping at end');
+      }
+
       this.scrollToItem(0, 'end');
       return;
+    } else {
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._heightChange - not keeping at end');
+      }
     }
   };
 
   _widthChange = (prevHeight, prevOffset) => {
-    if (prevOffset + prevHeight >= this._listMetaData.totalMeasuredSize - 10) {
+    const wasAtBottom =
+      prevOffset + prevHeight >=
+      this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+    if (window.logDSLEvents) {
+      console.log(
+        'DynamicSizeList._widthChange',
+        'prevHeight=' + prevHeight,
+        'prevOffset=' + prevOffset,
+        'totalMeasuredSize=' + this._listMetaData.totalMeasuredSize,
+        'wasAtBottom=' +
+          (prevOffset + prevHeight >=
+            this._listMetaData.totalMeasuredSize - atBottomMargin)
+      );
+    }
+
+    if (wasAtBottom) {
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._widthChange - keeping at end');
+      }
+
       this.scrollToItem(0, 'end');
       return;
+    } else {
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._widthChange - not keeping at end');
+      }
     }
   };
 
@@ -674,16 +722,38 @@ export default class DynamicSizeList extends PureComponent {
     const element = this._outerRef;
     const wasAtBottom =
       this.props.height + element.scrollTop >=
-      this._listMetaData.totalMeasuredSize - 10;
+      this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+    if (window.logDSLEvents) {
+      console.log(
+        'DynamicSizeList._handleNewMeasurements',
+        'props.height=' + this.props.height,
+        'element.scrollTop=' + element.scrollTop,
+        'totalMeasuredSize=' + this._listMetaData.totalMeasuredSize,
+        'wasAtBottom=' + wasAtBottom,
+        '_keepScrollToBottom=' + this._keepScrollToBottom,
+        'props.correctScrollToBottom=' + this.props.correctScrollToBottom
+      );
+    }
 
     if (
       (wasAtBottom || this._keepScrollToBottom) &&
       this.props.correctScrollToBottom
     ) {
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._handleNewMeasurements - keeping at end');
+      }
+
       this._generateOffsetMeasurements();
       this.scrollToItem(0, 'end');
       this.forceUpdate();
       return;
+    } else {
+      if (window.logDSLEvents) {
+        console.log(
+          'DynamicSizeList._handleNewMeasurements - not keeping at end'
+        );
+      }
     }
 
     if (forceScrollCorrection || this._keepScrollPosition) {
@@ -738,13 +808,38 @@ export default class DynamicSizeList extends PureComponent {
       delete this._listMetaData.itemOffsetMap[itemId];
       const element = this._outerRef;
 
-      var atBottom =
+      const atBottom =
         element.offsetHeight + element.scrollTop >=
-        this._listMetaData.totalMeasuredSize - 10;
-      this._generateOffsetMeasurements();
-      if (atBottom) {
-        this.scrollToItem(0, 'end');
+        this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+      if (window.logDSLEvents) {
+        console.log(
+          'DynamicSizeList._onItemRowUnmount',
+          'element.offsetHeight=' + element.offsetHeight,
+          'element.scrollTop=' + element.scrollTop,
+          'totalMeasuredSize=' + this._listMetaData.totalMeasuredSize,
+          'atBottom=' + atBottom,
+          '_keepScrollToBottom=' + this._keepScrollToBottom,
+          'props.correctScrollToBottom=' + this.props.correctScrollToBottom
+        );
       }
+
+      this._generateOffsetMeasurements();
+
+      if (atBottom) {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._onItemRowUnmount - keeping at end');
+        }
+
+        this.scrollToItem(0, 'end');
+      } else {
+        if (window.logDSLEvents) {
+          console.log(
+            'DynamicSizeList._onItemRowUnmount - not keeping at end at end'
+          );
+        }
+      }
+
       this.forceUpdate();
     }
   };
