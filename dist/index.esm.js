@@ -225,6 +225,8 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
   return ItemMeasurer;
 }(Component);
 
+var atBottomMargin = 10;
+
 var getItemMetadata = function getItemMetadata(props, index, listMetaData) {
   var itemOffsetMap = listMetaData.itemOffsetMap,
       itemSizeMap = listMetaData.itemSizeMap;
@@ -433,18 +435,46 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     };
 
     _this._heightChange = function (prevHeight, prevOffset) {
-      if (prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - 10) {
+      var wasAtBottom = prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._heightChange', 'prevHeight=' + prevHeight, 'prevOffset=' + prevOffset, 'totalMeasuredSize=' + _this._listMetaData.totalMeasuredSize, 'wasAtBottom=' + wasAtBottom);
+      }
+
+      if (wasAtBottom) {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._heightChange - keeping at end');
+        }
+
         _this.scrollToItem(0, 'end');
 
         return;
+      } else {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._heightChange - not keeping at end');
+        }
       }
     };
 
     _this._widthChange = function (prevHeight, prevOffset) {
-      if (prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - 10) {
+      var wasAtBottom = prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._widthChange', 'prevHeight=' + prevHeight, 'prevOffset=' + prevOffset, 'totalMeasuredSize=' + _this._listMetaData.totalMeasuredSize, 'wasAtBottom=' + (prevOffset + prevHeight >= _this._listMetaData.totalMeasuredSize - atBottomMargin));
+      }
+
+      if (wasAtBottom) {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._widthChange - keeping at end');
+        }
+
         _this.scrollToItem(0, 'end');
 
         return;
+      } else {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._widthChange - not keeping at end');
+        }
       }
     };
 
@@ -525,9 +555,17 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
       }
 
       var element = _this._outerRef;
-      var wasAtBottom = _this.props.height + element.scrollTop >= _this._listMetaData.totalMeasuredSize - 10;
+      var wasAtBottom = _this.props.height + element.scrollTop >= _this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+      if (window.logDSLEvents) {
+        console.log('DynamicSizeList._handleNewMeasurements', 'props.height=' + _this.props.height, 'element.scrollTop=' + element.scrollTop, 'totalMeasuredSize=' + _this._listMetaData.totalMeasuredSize, 'wasAtBottom=' + wasAtBottom, '_keepScrollToBottom=' + _this._keepScrollToBottom, 'props.correctScrollToBottom=' + _this.props.correctScrollToBottom);
+      }
 
       if ((wasAtBottom || _this._keepScrollToBottom) && _this.props.correctScrollToBottom) {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._handleNewMeasurements - keeping at end');
+        }
+
         _this._generateOffsetMeasurements();
 
         _this.scrollToItem(0, 'end');
@@ -535,6 +573,10 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
         _this.forceUpdate();
 
         return;
+      } else {
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._handleNewMeasurements - not keeping at end');
+        }
       }
 
       if (forceScrollCorrection || _this._keepScrollPosition) {
@@ -595,12 +637,24 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
         delete _this._listMetaData.itemSizeMap[itemId];
         delete _this._listMetaData.itemOffsetMap[itemId];
         var element = _this._outerRef;
-        var atBottom = element.offsetHeight + element.scrollTop >= _this._listMetaData.totalMeasuredSize - 10;
+        var atBottom = element.offsetHeight + element.scrollTop >= _this._listMetaData.totalMeasuredSize - atBottomMargin;
+
+        if (window.logDSLEvents) {
+          console.log('DynamicSizeList._onItemRowUnmount', 'element.offsetHeight=' + element.offsetHeight, 'element.scrollTop=' + element.scrollTop, 'totalMeasuredSize=' + _this._listMetaData.totalMeasuredSize, 'atBottom=' + atBottom, '_keepScrollToBottom=' + _this._keepScrollToBottom, 'props.correctScrollToBottom=' + _this.props.correctScrollToBottom);
+        }
 
         _this._generateOffsetMeasurements();
 
         if (atBottom) {
+          if (window.logDSLEvents) {
+            console.log('DynamicSizeList._onItemRowUnmount - keeping at end');
+          }
+
           _this.scrollToItem(0, 'end');
+        } else {
+          if (window.logDSLEvents) {
+            console.log('DynamicSizeList._onItemRowUnmount - not keeping at end at end');
+          }
         }
 
         _this.forceUpdate();
