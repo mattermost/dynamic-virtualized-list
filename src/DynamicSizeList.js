@@ -852,11 +852,7 @@ export default class DynamicSizeList extends PureComponent {
     const items = [];
     if (itemCount > 0) {
       for (let index = itemCount - 1; index >= 0; index--) {
-        const { size } = getItemMetadata(
-          this.props,
-          index,
-          this._listMetaData
-        );
+        const { size } = getItemMetadata(this.props, index, this._listMetaData);
 
         const [
           localOlderPostsToRenderStartIndex,
