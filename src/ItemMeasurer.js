@@ -149,7 +149,7 @@ export default class ItemMeasurer extends Component {
     };
 
     const renderItem = (
-      <div style={{ position: 'relative' }}>
+      <div role='listitem' style={{ position: 'relative' }}>
         {item}
         <div style={scrollableContainerStyles}>
           <div dir="ltr" style={scrollableWrapperStyle}>

@@ -132,6 +132,7 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
         width: '100%'
       };
       var renderItem = /*#__PURE__*/React__default.createElement("div", {
+        role: "listitem",
         style: {
           position: 'relative'
         }
