@@ -378,6 +378,7 @@ export default class DynamicSizeList extends PureComponent {
       createElement(innerTagName, {
         children: items,
         ref: innerRef,
+        role: 'list',
         style: innerListStyle,
       })
     );

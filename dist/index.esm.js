@@ -956,6 +956,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     }, createElement(innerTagName, {
       children: items,
       ref: innerRef,
+      role: 'list',
       style: innerListStyle
     }));
   };

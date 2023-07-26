@@ -963,6 +963,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     }, React.createElement(innerTagName, {
       children: items,
       ref: innerRef,
+      role: 'list',
       style: innerListStyle
     }));
   };
