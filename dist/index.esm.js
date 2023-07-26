@@ -125,6 +125,7 @@ var ItemMeasurer = /*#__PURE__*/function (_Component) {
         width: '100%'
       };
       var renderItem = /*#__PURE__*/React.createElement("div", {
+        role: "listitem",
         style: {
           position: 'relative'
         }
@@ -956,6 +957,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
     }, createElement(innerTagName, {
       children: items,
       ref: innerRef,
+      role: 'list',
       style: innerListStyle
     }));
   };
