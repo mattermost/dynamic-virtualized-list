@@ -846,7 +846,7 @@ export default class DynamicSizeList extends PureComponent {
   };
 
   _renderItems = () => {
-    const { children, direction, itemData, loaderId } = this.props;
+    const { children, direction, itemData, loaderId, visibleId } = this.props;
     const width = this.innerRefWidth;
     let [startIndex, stopIndex] = this._getRangeToRender();
     const itemCount = itemData.length;
@@ -866,6 +866,7 @@ export default class DynamicSizeList extends PureComponent {
           localOlderPostsToRenderStartIndex === stopIndex + 1;
 
         const isLoader = itemData[index] === loaderId;
+        const isVisible = itemData[index] === visibleId;
         const itemId = itemData[index];
 
         // It's important to read style after fetching item metadata.
@@ -874,7 +875,8 @@ export default class DynamicSizeList extends PureComponent {
         if (
           (index >= startIndex && index < stopIndex + 1) ||
           isItemInLocalPosts ||
-          isLoader
+          isLoader ||
+          isVisible
         ) {
           const item = createElement(children, {
             data: itemData,
