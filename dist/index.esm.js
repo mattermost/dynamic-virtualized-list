@@ -667,7 +667,8 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
           children = _this$props.children,
           direction = _this$props.direction,
           itemData = _this$props.itemData,
-          loaderId = _this$props.loaderId;
+          loaderId = _this$props.loaderId,
+          visibleId = _this$props.visibleId;
       var width = _this.innerRefWidth;
 
       var _this$_getRangeToRend2 = _this._getRangeToRender(),
@@ -687,12 +688,13 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
               localOlderPostsToRenderStopIndex = _this$state$localOlde[1];
           var isItemInLocalPosts = index >= localOlderPostsToRenderStartIndex && index < localOlderPostsToRenderStopIndex + 1 && localOlderPostsToRenderStartIndex === stopIndex + 1;
           var isLoader = itemData[index] === loaderId;
+          var isVisible = itemData[index] === visibleId;
           var itemId = itemData[index]; // It's important to read style after fetching item metadata.
           // getItemMetadata() will clear stale styles.
 
           var style = _this._getItemStyle(index);
 
-          if (index >= startIndex && index < stopIndex + 1 || isItemInLocalPosts || isLoader) {
+          if (index >= startIndex && index < stopIndex + 1 || isItemInLocalPosts || isLoader || isVisible) {
             var item = createElement(children, {
               data: itemData,
               itemId: itemId
