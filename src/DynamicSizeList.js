@@ -349,6 +349,7 @@ export default class DynamicSizeList extends PureComponent {
   render() {
     const {
       className,
+      id,
       innerRef,
       innerTagName,
       outerTagName,
@@ -364,6 +365,7 @@ export default class DynamicSizeList extends PureComponent {
       outerTagName,
       {
         className,
+        id,
         onScroll,
         ref: this._outerRefSetter,
         style: {
