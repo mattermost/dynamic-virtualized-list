@@ -943,6 +943,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
   _proto.render = function render() {
     var _this$props2 = this.props,
         className = _this$props2.className,
+        id = _this$props2.id,
         innerRef = _this$props2.innerRef,
         innerTagName = _this$props2.innerTagName,
         outerTagName = _this$props2.outerTagName,
@@ -954,6 +955,7 @@ var DynamicSizeList = /*#__PURE__*/function (_PureComponent) {
 
     return React.createElement(outerTagName, {
       className: className,
+      id: id,
       onScroll: onScroll,
       ref: this._outerRefSetter,
       style: _extends({
