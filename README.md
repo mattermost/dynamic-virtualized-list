@@ -1,3 +1,5 @@
+> This fork is now part of the [monorepo](https://github.com/mattermost/mattermost/tree/master/webapp/channels/src/components/dynamic_virtualized_list) 
+
 # react-window
 
 > React components for efficiently rendering dynamically sized lists
